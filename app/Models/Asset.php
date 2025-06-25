@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -24,6 +25,7 @@ class Asset extends Model
         'status',
         'uploaded_by',
         'category',
+        'company_id'
     ];
 
     protected $casts = [
@@ -41,10 +43,20 @@ class Asset extends Model
         return $this->hasMany(ShareableLink::class);
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'status', 'description'])
+            ->logOnly(['name', 'file_path', 'mime_type', 'size', 'category', 'description', 'company_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

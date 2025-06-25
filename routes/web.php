@@ -3,6 +3,8 @@
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -32,6 +34,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
     Route::post('/assets/{asset}/shareable-links', [AssetController::class, 'createShareableLink'])->name('assets.createShareableLink');
 
+    // Companies Routes
+    Route::resource('companies', CompanyController::class);
+
+    // Assets Routes
+    // Route::resource('assets', AssetController::class);
+
+    // User Management Routes (Admin Only)
+    Route::resource('users', UserController::class);
 });
 
 require __DIR__.'/auth.php';

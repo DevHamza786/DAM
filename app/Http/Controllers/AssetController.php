@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\Asset;
+use App\Models\Company;
 use App\Services\AssetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Jobs\GenerateThumbnailJob;
 
 class AssetController extends Controller
 {
@@ -24,7 +26,9 @@ class AssetController extends Controller
 
     public function index(Request $request)
     {
-        $query = Asset::with('uploader')
+        $this->authorize('viewAny', Asset::class);
+
+        $query = Asset::with('company')
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
@@ -32,46 +36,98 @@ class AssetController extends Controller
             ->when($request->type, function ($query, $type) {
                 $query->where('file_type', $type);
             })
+            ->when($request->company_id, function ($query, $companyId) {
+                $query->where('company_id', $companyId);
+            })
             ->latest();
 
-        $assets = $query->get();
+        $assets = $query->paginate(12);
 
         $assetsByCategory = $assets->groupBy('category');
 
         return Inertia::render('Assets/Index', [
+            'assets' => $assets,
             'assetsByCategory' => $assetsByCategory,
-            'filters' => $request->only(['search', 'type']),
+            'filters' => $request->only(['search', 'type', 'company_id']),
             'userRole' => Auth::user()->roles->pluck('name')->first(),
+            'companies' => Company::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name'])
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Assets/Create');
+        $this->authorize('create', Asset::class);
+
+        return Inertia::render('Assets/Create', [
+            'companies' => Company::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|max:102400', // 100MB max
-            'description' => 'nullable|string|max:1000',
+        $this->authorize('create', Asset::class);
+
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'required|in:media,tvc,ppt,reel',
+            'description' => 'nullable|string',
+            'file' => 'required|file|max:1048576',
+            'category' => 'required|string',
+            'company_id' => 'required|exists:companies,id'
         ]);
 
-        $asset = $this->assetService->upload(
-            $request->file('file'),
-            [
-                'description' => $request->description,
-                'uploaded_at' => now()->toIso8601String(),
-                'name' => $request->name,
-                'category' => $request->category,
-            ],
-            auth()->id()
-        );
+        $file = $request->file('file');
+        $path = $file->store('assets', 'public');
+
+        $asset = Asset::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'file_path' => $path,
+            'original_filename' => $file->getClientOriginalName(),
+            'mime_type' => $file->getMimeType(),
+            'file_type' => $this->determineFileType($file->getMimeType()),
+            'file_size' => $file->getSize(),
+            'category' => $validated['category'],
+            'company_id' => $validated['company_id'],
+            'user_id' => auth()->id(),
+            'uploaded_by' => auth()->id()
+        ]);
+
+        GenerateThumbnailJob::dispatch($asset);
 
         return redirect()->route('assets.index')
-            ->with('success', 'Asset uploaded successfully.');
+            ->with('message', 'Asset created successfully.');
+    }
+
+    private function determineFileType($mimeType)
+    {
+        if (str_starts_with($mimeType, 'image/')) {
+            return 'image';
+        }
+        if (str_starts_with($mimeType, 'video/')) {
+            return 'video';
+        }
+        if ($mimeType === 'application/pdf') {
+            return 'pdf';
+        }
+        if (in_array($mimeType, [
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])) {
+            return 'document';
+        }
+        if (in_array($mimeType, [
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        ])) {
+            return 'presentation';
+        }
+        return 'other';
     }
 
     public function show(Asset $asset)
@@ -88,27 +144,45 @@ class AssetController extends Controller
         ]);
     }
 
+    public function edit(Asset $asset)
+    {
+        $this->authorize('update', $asset);
+
+        return Inertia::render('Assets/Edit', [
+            'asset' => $asset,
+            'companies' => Company::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+        ]);
+    }
+
     public function update(Request $request, Asset $asset)
     {
         $this->authorize('update', $asset);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
+            'description' => 'nullable|string',
+            'category' => 'required|string',
+            'company_id' => 'required|exists:companies,id'
         ]);
 
         $asset->update($validated);
 
-        return back()->with('success', 'Asset updated successfully.');
+        return back()->with('message', 'Asset updated successfully.');
     }
 
     public function destroy(Asset $asset)
     {
         $this->authorize('delete', $asset);
 
-        $this->assetService->delete($asset);
+        if ($asset->file_path) {
+            Storage::disk('public')->delete($asset->file_path);
+        }
 
-        return back()->with('success', 'Asset deleted successfully.');
+        $asset->delete();
+
+        return back()->with('message', 'Asset deleted successfully.');
     }
 
     public function download(Asset $asset)

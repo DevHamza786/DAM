@@ -1,13 +1,22 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
+
+// Add computed property to check admin status
+const isAdmin = computed(() => {
+    const user = usePage().props.auth.user;
+    console.log('User data:', user);  // Debug log
+    console.log('Roles:', user?.roles);  // Debug log
+    return user && Array.isArray(user.roles) && user.roles.some(role => role.name === 'admin');
+});
 </script>
 
 <template>
@@ -31,7 +40,7 @@ const showingNavigationDropdown = ref(false);
 
                             <!-- Navigation Links -->
                             <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
+                                class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex"
                             >
                                 <NavLink
                                     :href="route('dashboard')"
@@ -40,8 +49,21 @@ const showingNavigationDropdown = ref(false);
                                     Dashboard
                                 </NavLink>
                                 <NavLink
+                                    v-if="isAdmin"
+                                    :href="route('users.index')"
+                                    :active="route().current('users.*')"
+                                >
+                                    Users
+                                </NavLink>
+                                <NavLink
+                                    :href="route('companies.index')"
+                                    :active="route().current('companies.*')"
+                                >
+                                    Companies
+                                </NavLink>
+                                <NavLink
                                     :href="route('assets.index')"
-                                    :active="route().current('assets.index')"
+                                    :active="route().current('assets.*')"
                                 >
                                     Assets
                                 </NavLink>
@@ -153,8 +175,21 @@ const showingNavigationDropdown = ref(false);
                             Dashboard
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
+                            v-if="isAdmin"
+                            :href="route('users.index')"
+                            :active="route().current('users.*')"
+                        >
+                            Users
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('companies.index')"
+                            :active="route().current('companies.*')"
+                        >
+                            Companies
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
                             :href="route('assets.index')"
-                            :active="route().current('assets.index')"
+                            :active="route().current('assets.*')"
                         >
                             Assets
                         </ResponsiveNavLink>

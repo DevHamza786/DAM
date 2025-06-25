@@ -23,6 +23,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'designation',
+        'is_enabled',
+        'last_login_at'
     ];
 
     /**
@@ -43,6 +47,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'is_enabled' => 'boolean',
+        'last_login_at' => 'datetime'
     ];
 
     public function roles(): BelongsToMany
@@ -52,21 +58,34 @@ class User extends Authenticatable
 
     public function hasRole(string $role): bool
     {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->contains('name', $role);
+        }
         return $this->roles()->where('name', $role)->exists();
     }
 
     public function hasAnyRole(array $roles): bool
     {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->whereIn('name', $roles)->isNotEmpty();
+        }
         return $this->roles()->whereIn('name', $roles)->exists();
     }
 
     public function isAdmin(): bool
     {
-        return $this->hasRole('admin');
+        return $this->roles->contains(function ($role) {
+            return $role->name === 'admin';
+        });
     }
 
     public function isUploader(): bool
     {
         return $this->hasRole('uploader');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_enabled', true);
     }
 }

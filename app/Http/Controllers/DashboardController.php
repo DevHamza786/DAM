@@ -7,6 +7,8 @@ use App\Models\Asset;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 class DashboardController extends Controller
 {
@@ -37,7 +39,7 @@ class DashboardController extends Controller
                 });
             }
 
-            $recentActivity = $query->paginate(10)->withQueryString();
+            $recentActivity = $query->paginate(5)->withQueryString();
 
             return Inertia::render('Dashboard', [
                 'statistics' => $statistics,
@@ -61,5 +63,33 @@ class DashboardController extends Controller
                 'error' => 'Failed to load dashboard data. Please try again later.'
             ]);
         }
+    }
+
+    public function store(Request $request)
+    {
+        // ...validate credentials...
+
+        $user = // ...get user by credentials...
+
+        // Check if user already has an active session
+        $activeSession = DB::table('sessions')
+            ->where('user_id', $user->id)
+            ->where('last_activity', '>', now()->subMinutes(config('session.lifetime'))->getTimestamp())
+            ->first();
+
+        if ($activeSession) {
+            return back()->withErrors([
+                'email' => 'Uploader is already logged in somewhere else.'
+            ]);
+        }
+
+        Auth::login($user, $remember);
+
+        // Store user_id in session table
+        DB::table('sessions')->where('id', Session::getId())->update([
+            'user_id' => $user->id
+        ]);
+
+        // ...redirect...
     }
 }

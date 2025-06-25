@@ -54,6 +54,27 @@
               <label class="block text-base font-medium text-gray-400 mb-1">Description</label>
               <textarea v-model="form.description" rows="4" class="w-full border border-gray-700 bg-[#232b3a] text-white rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none transition text-base" />
             </div>
+            <div>
+              <label class="block text-base font-medium text-gray-400 mb-1">Company</label>
+              <select v-model="form.company_id" class="w-full border border-gray-700 bg-[#232b3a] text-white rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none transition text-base" required>
+                <option value="" disabled>Select a company</option>
+                <option v-for="company in companies" :key="company.id" :value="company.id">{{ company.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-base font-medium text-gray-400 mb-1">Category</label>
+              <select v-model="form.category" class="w-full border border-gray-700 bg-[#232b3a] text-white rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none transition text-base" required>
+                  <option value="" disabled>Select a category</option>
+                  <option value="Credentials">Credentials</option>
+                  <option value="Showreel">Showreel</option>
+                  <option value="Images Albums">Images Albums</option>
+                  <option value="PPT Template">PPT Template</option>
+                  <option value="Logo Files">Logo Files</option>
+                  <option value="Creative Work">Creative Work</option>
+                  <option value="Case Studies">Case Studies</option>
+                  <option value="Documents">Documents</option>
+              </select>
+            </div>
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" @click="close" class="px-5 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600 transition text-base">Cancel</button>
               <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-base">Update</button>
@@ -73,6 +94,10 @@ import { router } from '@inertiajs/vue3'
 const props = defineProps({
   show: Boolean,
   asset: Object,
+  companies: {
+    type: Array,
+    default: () => []
+  }
 })
 
 const emit = defineEmits(['close', 'updated'])
@@ -80,12 +105,21 @@ const emit = defineEmits(['close', 'updated'])
 const form = reactive({
   name: '',
   description: '',
+  company_id: '',
+  category: ''
 })
 
 watch(() => props.asset, (val) => {
   if (val) {
-    form.name = val.name
-    form.description = val.description
+    form.name = val.name || ''
+    form.description = val.description || ''
+    form.company_id = val.company_id || ''
+    form.category = val.category || ''
+  } else {
+    form.name = ''
+    form.description = ''
+    form.company_id = ''
+    form.category = ''
   }
 }, { immediate: true })
 

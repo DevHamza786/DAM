@@ -17,24 +17,24 @@ class AssetPolicy
 
     public function view(User $user, Asset $asset)
     {
-        return $user->hasRole('admin') || 
+        return $user->hasRole('admin') ||
                ($user->hasRole('uploader') && $asset->uploaded_by === $user->id);
     }
 
     public function create(User $user)
     {
-        return $user->hasRole(['admin', 'uploader']);
+        return $user->hasAnyRole(['admin', 'uploader']);
     }
 
     public function update(User $user, Asset $asset)
     {
-        return $user->hasRole('admin') || 
+        return $user->hasRole('admin') ||
                ($user->hasRole('uploader') && $asset->uploaded_by === $user->id);
     }
 
     public function delete(User $user, Asset $asset)
     {
-        return $user->hasRole('admin') || 
+        return $user->hasRole('admin') ||
                ($user->hasRole('uploader') && $asset->uploaded_by === $user->id);
     }
 
@@ -57,4 +57,4 @@ class AssetPolicy
     {
         return $user->hasRole('admin');
     }
-} 
+}

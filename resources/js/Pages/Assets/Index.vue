@@ -6,20 +6,15 @@ import AssetModal from '@/Components/AssetModal.vue';
 import DeleteModal from '@/Components/DeleteModal.vue';
 import { toast } from 'vue3-toastify';
 import AssetEditModal from '@/Components/AssetEditModal.vue';
+import 'vue3-toastify/dist/index.css';
 
 const props = defineProps({
     assetsByCategory: Object,
-    filters: Object,
     userRole: String,
-    flash: Object
+    companies: Array,
+    filters: Object,
+    flash: Object,
 });
-
-const categoryLabels = {
-    tvc: 'TVC',
-    reel: 'Reels',
-    ppt: 'PPT',
-    media: 'Media',
-};
 
 const showModal = ref(false);
 const selectedAsset = ref(null);
@@ -28,6 +23,7 @@ const showDeleteModal = ref(false);
 const assetToDelete = ref(null);
 const search = ref(props.filters?.search || '');
 const showEditModal = ref(false);
+const selectedCompanyId = ref(props.filters?.company_id || (props.companies[0]?.id || ''));
 
 function openModal(asset) {
     selectedAsset.value = asset;
@@ -106,49 +102,85 @@ function refreshAssets() {
     // router.reload() ya router.visit(route('assets.index')) etc.
 }
 
+function selectCompany(companyId) {
+    selectedCompanyId.value = companyId;
+    router.get('/assets', {
+        ...props.filters,
+        company_id: companyId || undefined,
+        search: search.value || undefined
+    }, { preserveState: true, replace: true });
+}
+
+watch(() => props.companies, (companies) => {
+  if (!selectedCompanyId.value && companies.length > 0) {
+    selectedCompanyId.value = companies[0].id;
+  }
+}, { immediate: true });
+
+onMounted(() => {
+    if (!props.filters?.company_id && props.companies.length > 0) {
+        selectCompany(props.companies[0].id);
+    }
+});
+
 </script>
 
 <template>
     <AuthenticatedLayout>
         <Head title="Assets" />
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-black leading-tight">Assets</h2>
-                <div class="flex items-center gap-4">
-                    <!-- Search Bar (before New Asset button) -->
-                    <form @submit.prevent="submitSearch" class="flex gap-2">
-                        <input
-                            v-model="search"
-                            type="text"
-                            placeholder="Search by file name..."
-                            class="px-8 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 font-bold"
-                            style="min-width: 220px;"
-                        />
-                        <button
-                            type="submit"
+            <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-semibold text-xl text-black leading-tight">Assets</h2>
+                    <div class="flex items-center gap-4">
+                        <!-- Search Bar (before New Asset button) -->
+                        <form @submit.prevent="submitSearch" class="flex gap-2">
+                            <input
+                                v-model="search"
+                                type="text"
+                                placeholder="Search by file name..."
+                                class="px-8 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 font-bold"
+                                style="min-width: 220px;"
+                            />
+                            <button
+                                type="submit"
+                                class="inline-flex items-center gap-2 bg-black text-white px-8 py-3 rounded-full shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 font-bold tracking-wide"
+                            >
+                                Search
+                            </button>
+                            <button
+                                v-if="search"
+                                type="button"
+                                @click="clearSearch"
+                                class="px-2 py-2 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition"
+                            >
+                                ✕
+                            </button>
+                        </form>
+                        <!-- New Asset Button -->
+                        <Link
+                            href="/assets/create"
                             class="inline-flex items-center gap-2 bg-black text-white px-8 py-3 rounded-full shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 font-bold tracking-wide"
                         >
-                            Search
-                        </button>
-                        <button
-                            v-if="search"
-                            type="button"
-                            @click="clearSearch"
-                            class="px-2 py-2 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition"
-                        >
-                            ✕
-                        </button>
-                    </form>
-                    <!-- New Asset Button -->
-                    <Link
-                        href="/assets/create"
-                        class="inline-flex items-center gap-2 bg-black text-white px-8 py-3 rounded-full shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 font-bold tracking-wide"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            New Asset
+                        </Link>
+                    </div>
+                </div>
+                <!-- Company Tabs -->
+                 <hr>
+                <div class="flex gap-2 mt-2 overflow-x-auto flex-nowrap pb-2" style="scrollbar-width: thin;">
+                    <!-- Responsive horizontal scroll for company tabs -->
+                    <button
+                        v-for="company in companies"
+                        :key="company.id"
+                        :class="['px-4 py-2 rounded-full font-semibold whitespace-nowrap', selectedCompanyId == company.id ? 'bg-black text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300']"
+                        @click="selectCompany(company.id)"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        New Asset
-                    </Link>
+                        {{ company.name }}
+                    </button>
                 </div>
             </div>
         </template>
@@ -156,7 +188,7 @@ function refreshAssets() {
         <div class="py-12 min-h-screen">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div v-for="(assets, category) in assetsByCategory" :key="category" class="mb-12">
-                    <h3 class="text-2xl font-bold text-black mb-4">{{ categoryLabels[category] || category }}</h3>
+                    <h3 class="text-2xl font-bold text-black mb-4">{{ category }}</h3>
                     <div class="relative">
                         <!-- Left Button -->
                         <button
@@ -318,8 +350,23 @@ function refreshAssets() {
         <AssetEditModal
             :show="showEditModal"
             :asset="selectedAsset"
+            :companies="companies"
             @close="closeEditModal"
             @updated="refreshAssets"
         />
     </AuthenticatedLayout>
 </template>
+
+<style>
+/* Hide scrollbar for horizontal scroll on company tabs */
+.flex-nowrap::-webkit-scrollbar {
+  height: 6px;
+}
+.flex-nowrap::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+.flex-nowrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+</style>
