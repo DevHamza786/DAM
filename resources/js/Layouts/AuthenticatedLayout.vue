@@ -13,8 +13,8 @@ const showingNavigationDropdown = ref(false);
 // Add computed property to check admin status
 const isAdmin = computed(() => {
     const user = usePage().props.auth.user;
-    console.log('User data:', user);  // Debug log
-    console.log('Roles:', user?.roles);  // Debug log
+    // console.log('User data:', user);  // Debug log
+    // console.log('Roles:', user?.roles);  // Debug log
     return user && Array.isArray(user.roles) && user.roles.some(role => role.name === 'admin');
 });
 </script>

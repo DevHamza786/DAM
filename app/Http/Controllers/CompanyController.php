@@ -11,6 +11,9 @@ class CompanyController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = $request->input('perPage', 10);
+        $page = $request->input('page', 1);
+
         $query = Company::query()
             ->withCount('assets')
             ->when($request->input('sort'), function ($query, $sort) use ($request) {
@@ -31,7 +34,10 @@ class CompanyController extends Controller
                 });
             });
 
-        $perPage = $request->input('perPage', 10);
+        // Force page resolver (sometimes needed with Inertia)
+        \Illuminate\Pagination\Paginator::currentPageResolver(function () use ($page) {
+            return $page;
+        });
 
         return Inertia::render('Companies/Index', [
             'companies' => $query->paginate($perPage)
@@ -48,10 +54,6 @@ class CompanyController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'logo' => 'nullable|image|max:2048',
-            'description' => 'nullable|string',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string',
-            'address' => 'nullable|string',
             'is_active' => 'boolean'
         ]);
 

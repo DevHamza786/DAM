@@ -60,7 +60,12 @@
                                 </div>
                             </template>
                             <template #item-name="item">
-                                <div class="font-medium text-gray-900">{{ item.name }}</div>
+                                <a
+                                    class="font-medium text-gray-900 cursor-pointer hover:underline"
+                                    :href="route('assets.index', { company_id: item.id })"
+                                >
+                                    {{ item.name }}
+                                </a>
                             </template>
                             <template #item-assets_count="item">
                                 <span class="font-semibold text-gray-700">{{ item.assets_count }}</span>
@@ -74,14 +79,14 @@
                                 </span>
                             </template>
                             <template #item-actions="item">
-                                <div class="flex justify-end space-x-3">
+                                <div class="flex justify-start space-x-3">
                                     <Link :href="route('companies.edit', item.id)" class="inline-flex items-center text-indigo-600 hover:text-indigo-900">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                         Edit
                                     </Link>
-                                    <button @click="deleteCompany(item)" class="inline-flex items-center text-red-600 hover:text-red-900">
+                                    <button v-if="item.assets_count === 0" @click="deleteCompany(item)" class="inline-flex items-center text-red-600 hover:text-red-900">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
@@ -105,6 +110,7 @@ import { ref, computed, onMounted } from 'vue';
 import 'vue3-easy-data-table/dist/style.css';
 import EasyDataTable from 'vue3-easy-data-table';
 import debounce from 'lodash/debounce';
+import axios from 'axios';
 
 const props = defineProps({
     companies: {
@@ -136,6 +142,8 @@ const tableItems = computed(() => props.companies.data || []);
 onMounted(() => {
     serverOptions.value.page = props.companies.current_page;
     serverOptions.value.rowsPerPage = props.companies.per_page;
+    console.log('Mounted: props.companies', props.companies);
+    console.log('Mounted: tableItems', tableItems.value);
 });
 
 const handleSearch = debounce((e) => {
@@ -150,6 +158,9 @@ const handleSearch = debounce((e) => {
 }, 300);
 
 const onOptionsUpdate = (newOptions) => {
+    console.log('Pagination event:', newOptions);
+    console.log('Before request: props.companies', props.companies);
+    console.log('Before request: tableItems', tableItems.value);
     router.get(route('companies.index'), {
         page: newOptions.page,
         perPage: newOptions.rowsPerPage,
@@ -159,7 +170,12 @@ const onOptionsUpdate = (newOptions) => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        replace: true
+        replace: true,
+        onSuccess: (page) => {
+            console.log('After request: Inertia page', page);
+            console.log('After request: props.companies', props.companies);
+            console.log('After request: tableItems', tableItems.value);
+        }
     });
 };
 
