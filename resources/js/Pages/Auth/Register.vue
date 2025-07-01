@@ -9,6 +9,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 const form = useForm({
     name: '',
     email: '',
+    designation: '',
     password: '',
     password_confirmation: '',
 });
@@ -23,6 +24,10 @@ const submit = () => {
 <template>
     <GuestLayout>
         <Head title="Register" />
+
+        <div class="mb-4 text-sm text-blue-600">
+            Note: You can only register using your official email address.
+        </div>
 
         <form @submit.prevent="submit">
             <div>
@@ -54,6 +59,21 @@ const submit = () => {
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel for="designation" value="Designation" />
+
+                <TextInput
+                    id="designation"
+                    type="text"
+                    class="mt-1 block w-full"
+                    v-model="form.designation"
+                    required
+                    autocomplete="organization-title"
+                />
+
+                <InputError class="mt-2" :message="form.errors.designation" />
             </div>
 
             <div class="mt-4">
