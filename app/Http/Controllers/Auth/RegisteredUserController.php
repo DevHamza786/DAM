@@ -32,7 +32,33 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                'unique:'.User::class,
+                function ($attribute, $value, $fail) {
+                    $allowedDomains = [
+                        'ahmedkapadia.com',
+                        'brandsynariourdu.com',
+                        'lkmwt.org',
+                        'synchronizemedia.com',
+                        'synergydentsu.com',
+                        'synergyzer.com',
+                        'synitedigital.com',
+                        'syntaxcommunications.com',
+                        'synergygroup.com.pk',
+                        'synergymarketing.biz',
+                        'brandsynario.com'
+                    ];
+                    $emailDomain = strtolower(substr(strrchr($value, '@'), 1));
+                    if (!in_array($emailDomain, $allowedDomains)) {
+                        $fail('You can only register using an official company email address.');
+                    }
+                },
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 

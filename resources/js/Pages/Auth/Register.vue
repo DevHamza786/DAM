@@ -5,6 +5,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import Loader from '@/Components/Loader.vue';
 
 const form = useForm({
     name: '',
@@ -24,6 +25,8 @@ const submit = () => {
 <template>
     <GuestLayout>
         <Head title="Register" />
+
+        <Loader v-if="form.processing" />
 
         <div class="mb-4 text-sm text-blue-600">
             Note: You can only register using your official email address.
