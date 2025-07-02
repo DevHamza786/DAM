@@ -1,1 +1,0 @@
-import{_ as o}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{c,o as e}from"./app-tUvYeGV1.js";const t={},r={src:"/media/synergy-logo.png",alt:"Synergy Group Logo",class:"block bg-black",style:{height:"24px",width:"auto"}};function s(n,a){return e(),c("img",r)}const l=o(t,[["render",s]]);export{l as A};

@@ -49,9 +49,9 @@
                         >
                             <template #item-logo="{ logo, name }">
                                 <div class="flex items-center py-2">
-                                    <div class="h-12 w-12 flex-shrink-0">
-                                        <img v-if="logo" :src="'/storage/' + logo" class="h-12 w-12 rounded-lg object-cover shadow-sm" :alt="name">
-                                        <div v-else class="h-12 w-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-sm">
+                                    <div class="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-gray-200 border border-gray-400 rounded-lg overflow-hidden">
+                                        <img v-if="logo" :src="'/storage/' + logo" class="h-10 w-10 object-contain" :alt="name">
+                                        <div v-else class="flex items-center justify-center w-full h-full">
                                             <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                             </svg>
@@ -172,9 +172,9 @@ const onOptionsUpdate = (newOptions) => {
         preserveScroll: true,
         replace: true,
         onSuccess: (page) => {
-            console.log('After request: Inertia page', page);
-            console.log('After request: props.companies', props.companies);
-            console.log('After request: tableItems', tableItems.value);
+            // console.log('After request: Inertia page', page);
+            // console.log('After request: props.companies', props.companies);
+            // console.log('After request: tableItems', tableItems.value);
         }
     });
 };

@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/assets/{asset}/shareable-links', [AssetController::class, 'createShareableLink'])->name('assets.createShareableLink');
 
     // Companies Routes
+    Route::post('/companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
     Route::resource('companies', CompanyController::class);
 
     // Assets Routes

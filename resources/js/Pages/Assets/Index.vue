@@ -7,6 +7,7 @@ import DeleteModal from '@/Components/DeleteModal.vue';
 import { toast } from 'vue3-toastify';
 import AssetEditModal from '@/Components/AssetEditModal.vue';
 import 'vue3-toastify/dist/index.css';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
     assetsByCategory: Object,
@@ -14,6 +15,7 @@ const props = defineProps({
     companies: Array,
     filters: Object,
     flash: Object,
+    assets: Object,
 });
 
 const showModal = ref(false);
@@ -338,6 +340,9 @@ onMounted(() => {
                         </button>
                     </div>
                 </div>
+            </div>
+            <div class="flex justify-center mt-8">
+                <Pagination :links="props.assets.links" />
             </div>
         </div>
         <AssetModal :show="showModal" :asset="selectedAsset" @close="closeModal" />

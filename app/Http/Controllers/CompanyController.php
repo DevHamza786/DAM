@@ -77,7 +77,7 @@ class CompanyController extends Controller
     public function update(Request $request, Company $company)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'sometimes|nullable|string|max:255',
             'logo' => 'nullable|image|max:2048',
             'description' => 'nullable|string',
             'email' => 'nullable|email',
@@ -86,13 +86,17 @@ class CompanyController extends Controller
             'is_active' => 'boolean'
         ]);
 
+        // If name is not provided in the request, use the existing company name
+        if (empty($validated['name'])) {
+            $validated['name'] = $company->name;
+        }
+
         if ($request->hasFile('logo')) {
             if ($company->logo) {
                 Storage::disk('public')->delete($company->logo);
             }
             $validated['logo'] = $request->file('logo')->store('companies', 'public');
         }
-
         $company->update($validated);
 
         return redirect()->route('companies.index')

@@ -21,13 +21,13 @@
                         <input
                             type="file"
                             id="logo"
-                            @input="form.logo = $event.target.files[0]"
+                            @change="e => form.logo = e.target.files[0]"
                             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-1"
                             accept="image/*"
                         />
                         <InputError :message="form.errors.logo" class="mt-2" />
-                        <div v-if="company?.logo" class="mt-2">
-                            <img :src="'/storage/' + company.logo" class="h-20 w-20 object-cover rounded" :alt="company?.name">
+                        <div v-if="company?.logo" class="mt-2 flex justify-center items-center bg-gray-200 border border-gray-400 rounded p-2" style="min-height: 80px; min-width: 120px;">
+                            <img :src="'/storage/' + company.logo" class="h-20 w-auto max-w-full object-contain" :alt="company?.name">
                         </div>
                     </div>
                     <!-- Status -->
@@ -62,6 +62,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Checkbox from '@/Components/Checkbox.vue';
 import { Link } from '@inertiajs/vue3';
+import { watch } from 'vue';
 
 const props = defineProps({
     company: {
@@ -82,12 +83,26 @@ const form = useForm({
 
 const submit = () => {
     if (props.company?.id) {
-        form.post(route('companies.update', props.company.id), {
-            _method: 'put',
-            preserveScroll: true
+        const data = new FormData();
+        data.append('name', form.name ?? '');
+        data.append('is_active', form.is_active ? 1 : 0);
+        if (form.logo) {
+            data.append('logo', form.logo);
+        }
+        data.append('_method', 'PUT');
+        form.post(route('companies.update', props.company.id), data, {
+            preserveScroll: true,
+            forceFormData: true
         });
     } else {
         form.post(route('companies.store'));
     }
 };
+
+// Ensure form.name is always up-to-date when changing logo
+watch(() => props.company?.name, (newName) => {
+    if (!form.name) {
+        form.name = newName || '';
+    }
+});
 </script>
