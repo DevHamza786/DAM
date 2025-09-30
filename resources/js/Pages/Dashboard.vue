@@ -8,6 +8,7 @@ import { router } from '@inertiajs/vue3'
 const props = defineProps({
     statistics: Object,
     recentActivity: Object,
+    companies: Array,
     user: Object,
     error: {
         type: String,
@@ -42,6 +43,52 @@ function goToPage(url) {
     if (url) {
         router.visit(url, { scroll: true })
     }
+}
+
+function goToCompanyAssets(companyId) {
+    router.visit(`/assets?company_id=${companyId}`, { scroll: true })
+}
+
+function getCompanyColor(companyName) {
+    const colorMap = {
+        // Exact matches
+        'ak work': '#292C2E',
+        'brandsynario': '#4DB2EC',
+        'synergy advertising': '#C8102E',
+        'synchronize media': '#6AF15C',
+        'synergy marketing': '#EC3737',
+        'synergy dentsu': '#252EC6',
+        'synergy group': '#18181C',
+        'synergyzer': '#EC3737',
+        'synite digital': '#F30000',
+        'syntax communications': '#122F4D',
+        'syntinel': '#FC5000',
+        'lkmwt': '#EC3737',
+
+        // Partial matches for variations
+        'synite': '#F30000',
+        'synergy': '#EC3737',
+        'synerg': '#252EC6',
+        'brand': '#4DB2EC',
+        'sync': '#6AF15C'
+    };
+
+    const normalizedName = companyName.toLowerCase().trim();
+
+    // Try exact match first
+    if (colorMap[normalizedName]) {
+        return colorMap[normalizedName];
+    }
+
+    // Try partial matches
+    for (const [key, color] of Object.entries(colorMap)) {
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            return color;
+        }
+    }
+
+    // Fallback color
+    return '#FC5000';
 }
 </script>
 
@@ -80,6 +127,98 @@ function goToPage(url) {
             </div>
 
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <!-- Companies Section -->
+                <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-900 mb-2">Companies</h2>
+                            <p class="text-gray-600">Click on any company to explore their digital assets</p>
+                        </div>
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-2xl">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div
+                            v-for="company in companies"
+                            :key="company.id"
+                            @click="goToCompanyAssets(company.id)"
+                            class="group bg-gradient-to-br from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-105 border border-gray-200 hover:border-gray-300 relative overflow-hidden"
+                        >
+                            <!-- Decorative gradient overlay -->
+                            <div
+                                class="absolute top-0 right-0 w-20 h-20 opacity-10 rounded-full transform translate-x-8 -translate-y-8 transition-all duration-300 group-hover:scale-150"
+                                :style="{ backgroundColor: getCompanyColor(company.name) }"
+                            ></div>
+
+                            <div class="relative z-10">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-4">
+                                        <div
+                                            class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                                            :style="{
+                                                backgroundColor: getCompanyColor(company.name),
+                                                boxShadow: `0 8px 32px ${getCompanyColor(company.name)}40`
+                                            }"
+                                        >
+                                            <span class="text-white font-bold text-lg">{{ company.name.charAt(0).toUpperCase() }}</span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-bold text-gray-900 text-base mb-1 group-hover:text-gray-700 transition-colors">
+                                                {{ company.name }}
+                                            </h3>
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                                <p class="text-sm text-gray-600 font-medium">{{ company.assets_count }} assets</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span v-if="company.description" class="text-sm text-gray-600 truncate flex-1">{{ company.description }}</span>
+                                        <span v-else class="text-sm text-gray-400 italic">No description available</span>
+                                    </div>
+
+                                    <!-- Progress bar for visual appeal -->
+                                    <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                        <div
+                                            class="h-2 rounded-full transition-all duration-500 ease-out"
+                                            :style="{
+                                                width: `${Math.min((company.assets_count / 10) * 100, 100)}%`,
+                                                backgroundColor: getCompanyColor(company.name)
+                                            }"
+                                        ></div>
+                                    </div>
+
+                                    <!-- Asset count badge -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                            <span class="text-xs text-gray-500">{{ company.assets_count === 1 ? 'asset' : 'assets' }}</span>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-500 group-hover:text-gray-700 transition-colors">
+                                            Click to view
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Stats Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Images Card -->

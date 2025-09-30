@@ -36,11 +36,12 @@
                         </div>
 
                         <EasyDataTable
+                            :key="serverOptions.page + '-' + serverOptions.rowsPerPage"
                             :headers="headers"
                             :items="tableItems"
                             :server-options="serverOptions"
                             :server-items-length="totalItems"
-                            @update:options="onOptionsUpdate"
+                            @update:server-options="onOptionsUpdate"
                             table-class-name="customize-table"
                             show-index
                             alternating
@@ -106,7 +107,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Link, Head } from '@inertiajs/vue3';
 import { router } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import 'vue3-easy-data-table/dist/style.css';
 import EasyDataTable from 'vue3-easy-data-table';
 import debounce from 'lodash/debounce';
@@ -139,11 +140,17 @@ const searchQuery = ref('');
 const totalItems = computed(() => props.companies.total);
 const tableItems = computed(() => props.companies.data || []);
 
+watch(
+  () => props.companies,
+  (newCompanies) => {
+    serverOptions.value.page = newCompanies.current_page;
+    serverOptions.value.rowsPerPage = newCompanies.per_page || newCompanies.perPage;
+  }
+);
+
 onMounted(() => {
     serverOptions.value.page = props.companies.current_page;
     serverOptions.value.rowsPerPage = props.companies.per_page;
-    console.log('Mounted: props.companies', props.companies);
-    console.log('Mounted: tableItems', tableItems.value);
 });
 
 const handleSearch = debounce((e) => {
@@ -157,25 +164,16 @@ const handleSearch = debounce((e) => {
     });
 }, 300);
 
-const onOptionsUpdate = (newOptions) => {
-    console.log('Pagination event:', newOptions);
-    console.log('Before request: props.companies', props.companies);
-    console.log('Before request: tableItems', tableItems.value);
+const onOptionsUpdate = (opts) => {
     router.get(route('companies.index'), {
-        page: newOptions.page,
-        perPage: newOptions.rowsPerPage,
-        sort: newOptions.sortBy,
-        order: newOptions.sortType,
+        page: opts.page,
+        perPage: opts.rowsPerPage,   // <-- camelCase to match backend
+        sort: opts.sortBy,
+        order: opts.sortType,
         search: searchQuery.value
     }, {
-        preserveState: true,
         preserveScroll: true,
-        replace: true,
-        onSuccess: (page) => {
-            // console.log('After request: Inertia page', page);
-            // console.log('After request: props.companies', props.companies);
-            // console.log('After request: tableItems', tableItems.value);
-        }
+        replace: true
     });
 };
 

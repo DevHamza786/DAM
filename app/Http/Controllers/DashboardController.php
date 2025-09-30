@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Asset;
+use App\Models\Company;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Http\Request;
@@ -41,9 +42,16 @@ class DashboardController extends Controller
 
             $recentActivity = $query->paginate(5)->withQueryString();
 
+            // Get companies with asset counts
+            $companies = Company::where('is_active', true)
+                ->withCount('assets')
+                ->orderBy('name')
+                ->get();
+
             return Inertia::render('Dashboard', [
                 'statistics' => $statistics,
                 'recentActivity' => $recentActivity,
+                'companies' => $companies,
                 'search' => $request->search,
                 'user' => Auth::user(),
             ]);
